@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Link Builder - Going</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cumulus: #10182F;
+            --lagoon: #006FAD;
+            --riviera: #009ACF;
+            --aurora-green: #2EBF60;
+            --sky-blue: #B5D9ED;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--sky-blue) 0%, var(--white) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(16, 24, 47, 0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: var(--cumulus);
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: var(--lagoon);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: var(--cumulus);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            border-color: var(--riviera);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 154, 207, 0.1);
+        }
+
+        .card-search-container {
+            position: relative;
+        }
+
+        #cardSearch {
+            padding-right: 40px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--sky-blue);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 100;
+        }
+
+        .suggestion {
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .suggestion:hover {
+            background: var(--sky-blue);
+        }
+
+        .suggestion-name {
+            font-weight: 600;
+            color: var(--cumulus);
+        }
+
+        .suggestion-code {
+            font-size: 0.85rem;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        /* highlighted suggestion for keyboard nav */
+        .suggestion.highlighted {
+            background: var(--sky-blue);
+            border-left: 4px solid var(--riviera);
+        }
+
+        .selected-cards {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 60px;
+        }
+
+        .selected-card-chip {
+            display: inline-flex;
+            align-items: center;
+            background: var(--lagoon);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin: 5px;
+            position: relative;
+            animation: slideIn 0.3s ease;
+            gap: 6px;
+            cursor: grab;
+        }
+
+        .selected-card-chip:active {
+            cursor: grabbing;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .remove-card {
+            margin-left: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .drag-hint {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .email-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .email-type-option {
+            position: relative;
+        }
+
+        .email-type-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .email-type-option label {
+            display: block;
+            padding: 12px;
+            background: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .email-type-option input[type="radio"]:checked + label {
+            background: var(--aurora-green);
+            color: white;
+            border-color: var(--aurora-green);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--riviera);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--lagoon);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 111, 173, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: var(--cumulus);
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--sky-blue) 0%, #f0f8ff 100%);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--cumulus);
+            margin-bottom: 10px;
+        }
+
+        .result-link {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            color: var(--lagoon);
+            margin-bottom: 15px;
+            border: 2px solid var(--riviera);
+        }
+
+        .copy-btn {
+            background: var(--aurora-green);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #25a04f;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn.copied {
+            background: var(--cumulus);
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .loader {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--sky-blue);
+            border-top: 3px solid var(--riviera);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Card Link Builder</h1>
+        <p class="subtitle">Build custom card links with multiple cards in specific order</p>
+
+        <div class="form-section">
+            <label for="cardSearch">Search and Select Cards (in order):</label>
+            <div class="card-search-container">
+                <input type="text" 
+                       id="cardSearch" 
+                       placeholder="Type card name (e.g., 'Venture X', 'Sapphire', 'Globe', 'Atmos')..."
+                       autocomplete="off">
+                <span class="search-icon">🔍</span>
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+            <div class="selected-cards" id="selectedCards">
+                <span style="color: #999;">No cards selected yet</span>
+            </div>
+            <p class="help-text">
+                Cards will appear in the link in the order you select them.
+                <span class="drag-hint">Drag and drop to reorder.</span>
+            </p>
+        </div>
+
+        <div class="form-section">
+            <label>Email Type:</label>
+            <div class="email-type-grid">
+                <div class="email-type-option">
+                    <input type="radio" id="gwp" name="emailType" value="gwp" checked>
+                    <label for="gwp">GWP</label>
+                </div>
+                <div class="email-type-option">
+                    <input type="radio" id="lto" name="emailType" value="lto">
+                    <label for="lto">LTO</label>
+                </div>
+                <div class="email-type-option">
+                    <input type="radio" id="bestoffers" name="emailType" value="bestoffers">
+                    <label for="bestoffers">Best Offers</label>
+                </div>
+                <div class="email-type-option">
+                    <input type="radio" id="newsletter" name="emailType" value="newsletter">
+                    <label for="newsletter">Newsletter</label>
+                </div>
+                <div class="email-type-option">
+                    <input type="radio" id="custom" name="emailType" value="custom">
+                    <label for="custom">Custom</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section" id="customEmailSection" style="display: none;">
+            <label for="customEmailType">Custom Email Type:</label>
+            <input type="text" id="customEmailType" placeholder="e.g., 'special promo' (spaces removed in link)">
+        </div>
+
+        <div class="form-section">
+            <label for="liveDate">Live Date:</label>
+            <input type="date" id="liveDate">
+            <p class="help-text">Will be formatted as MMDDYY in the link</p>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="generateLink()">Generate Link</button>
+            <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="result-label">Generated Link:</div>
+            <div class="result-link" id="resultLink"></div>
+            <button class="copy-btn" onclick="copyLink()">📋 Copy Link</button>
+        </div>
+
+        <div class="loader" id="loader"></div>
+    </div>
+
+    <script>
+        // Card database - extracted directly from the Excel sheet
+        const cardDatabase = [
+            {name: "American Express(R) Blue Business Cash Card", code: "4048169"},
+            {name: "The Blue Business(R) Plus Credit Card from American Express", code: "4028098"},
+            {name: "The Business Platinum(R) Card from American Express", code: "4028096"},
+            {name: "American Express(R) Business Gold Card", code: "4028093"},
+            {name: "Delta Reserve for Business Credit Card", code: "4048102"},
+            {name: "The Hilton Honors American Express Business Card", code: "4028102"},
+            {name: "Marriott Bonvoy Business(TM) Card from American Express(R)", code: "4048147"},
+            {name: "Hilton Honors Card from American Express", code: "4048112"},
+            {name: "Delta SkyMiles(R) Gold Business American Express Card", code: "4028094"},
+            {name: "Delta SkyMiles(R) Platinum Business American Express Card", code: "4028101"},
+            {name: "The Plum Card(R) from American Express", code: "4028097"},
+            {name: "Amazon Business Prime American Express Card", code: "4048263"},
+            {name: "Amazon Business American Express Card", code: "4048262"},
+            {name: "Blue Cash Preferred(R) Card from American Express", code: "4028090"},
+            {name: "Blue Cash Everyday(R) Card from American Express", code: "4028086"},
+            {name: "American Express(R) Gold Card", code: "4028085"},
+            {name: "Delta SkyMiles(R) Blue American Express Card", code: "4028092"},
+            {name: "Delta SkyMiles(R) Gold American Express Card", code: "4028088"},
+            {name: "Delta SkyMiles(R) Platinum American Express Card", code: "4048101"},
+            {name: "Delta Reserve(R) Credit Card from American Express", code: "4048149"},
+            {name: "Marriott Bonvoy Brilliant(R) American Express(R) Card", code: "4048231"},
+            {name: "Marriott Bonvoy Bevy(TM) American Express(R) Card", code: "5048293"},
+            {name: "The Platinum Card(R) from American Express", code: "4028089"},
+            {name: "Capital One Venture X Business", code: "5048345"},
+            {name: "Capital One(R) Venture(R) Rewards Credit Card", code: "3006151"},
+            {name: "Capital One(R) VentureOne(R) Rewards Credit Card", code: "3006150"},
+            {name: "Capital One(R) Quicksilver(R) Cash Rewards Credit Card", code: "3006159"},
+            {name: "Capital One(R) SavorOne(R) Cash Rewards Credit Card", code: "4048129"},
+            {name: "Capital One(R) Spark(R) Miles for Business", code: "3006149"},
+            {name: "Capital One Spark Cash Select for Excellent Credit", code: "3006153"},
+            {name: "Capital One Spark Cash Select for Good Credit", code: "4048256"},
+            {name: "Capital One Spark Cash Plus", code: "4048264"},
+            {name: "Capital One Venture X Rewards Credit Card", code: "4048272"},
+            {name: "Capital One Quicksilver Cash Rewards for Good Credit", code: "5048284"},
+            {name: "Capital One SavorOne Cash Rewards for Good Credit", code: "5048285"},
+            {name: "Capital One VentureOne Rewards for Good Credit", code: "5048286"},
+            {name: "Prime Visa", code: "5048341"},
+            {name: "Chase Sapphire Reserve(R)", code: "4048084"},
+            {name: "British Airways Visa Signature(R) Card", code: "740101"},
+            {name: "Iberia Visa Signature(R) Card", code: "4048213"},
+            {name: "Aer Lingus Visa Signature(R) Card", code: "4048214"},
+            {name: "IHG(R) Rewards Club Premier Credit Card", code: "4048106"},
+            {name: "IHG(R) Rewards Premier Business Credit Card", code: "4048281"},
+            {name: "IHG(R) Rewards Club Traveler Credit Card", code: "4048176"},
+            {name: "Chase Sapphire Preferred(R) Card", code: "2061159"},
+            {name: "Southwest Rapid Rewards(R) Plus Credit Card", code: "520080"},
+            {name: "Southwest Rapid Rewards(R) Premier Credit Card", code: "2000147"},
+            {name: "Southwest Rapid Rewards(R) Priority Credit Card", code: "4048122"},
+            {name: "The World Of Hyatt Credit Card", code: "4048116"},
+            {name: "World of Hyatt Business Credit Card", code: "4048270"},
+            {name: "United Quest(SM) Card", code: "4048245"},
+            {name: "United(SM) Explorer Card", code: "4048117"},
+            {name: "United Club(SM) Infinite Card", code: "4048196"},
+            {name: "United Gateway(SM) Card", code: "4048226"},
+            {name: "Ink Business Preferred(R) Credit Card", code: "3006145"},
+            {name: "Ink Business Cash(SM) Credit Card", code: "340040"},
+            {name: "Ink Business Unlimited(SM) Credit Card", code: "4048113"},
+            {name: "Ink Business Premier(SM) Credit Card", code: "5048295"},
+            {name: "Chase Sapphire Reserve Business", code: "5048384"},
+            {name: "Southwest(R) Rapid Rewards(R) Premier Business Credit Card", code: "4048107"},
+            {name: "United(SM) Business Card", code: "4048193"},
+            {name: "Southwest(R) Rapid Rewards(R) Performance Business Credit Card", code: "4048165"},
+            {name: "Chase Freedom Unlimited(R)", code: "3006090"},
+            {name: "Aeroplan(R) Credit Card", code: "4048274"},
+            {name: "Instacart Mastercard(R)", code: "5048288"},
+            {name: "DoorDash Rewards Mastercard(R)", code: "5048308"},
+            {name: "Sofi Credit Card", code: "4048242"},
+            {name: "My GM Rewards Card(TM)", code: "4048279"},
+            {name: "GM Business Card(TM)", code: "4048280"},
+            {name: "Mastercard(R) Titanium Card(TM)", code: "3006106"},
+            {name: "Mastercard(R) Black Card(TM)", code: "3006107"},
+            {name: "Mastercard(R) Gold Card(TM)", code: "3006111"},
+            {name: "TD Cash Visa(R) Credit Card", code: "3006071"},
+            {name: "Petal(R) 2 Cash Back", code: "4048163"},
+            {name: 'Petal(R) 1 "No Annual Fee" Visa(R) Credit Card', code: "4048225"},
+            {name: "Applied Bank Secured Visa(R) Gold Preferred(R) Card", code: "4048210"},
+            {name: "Self - Credit Builder Account + Secured Visa(R) Credit Card", code: "4048223"},
+            {name: "Greenlight Debit Card for Kids", code: "4048238"},
+            {name: "Capital One(R) Platinum Credit Card", code: "3006155"},
+            {name: "Capital One Platinum Secured Credit Card", code: "3006156"},
+            {name: "Capital One(R) QuicksilverOne(R) Cash Rewards Credit Card", code: "3006160"},
+            {name: "Capital One Quicksilver Student Cash Rewards Credit Card", code: "4048265"},
+            {name: "Capital One SavorOne Student Cash Rewards Credit Card", code: "4048266"},
+            {name: "Capital One Quicksilver Secured Cash Rewards Credit Card", code: "4048271"},
+            {name: "Chime(R) Credit Builder Secured Credit Builder Visa(R) Card", code: "4048273"},
+            {name: "Upgrade Triple Cash Rewards Visa(R)", code: "4048246"},
+            {name: "OpenSky(R) Secured Visa(R) Credit Card", code: "3006132"},
+            {name: "First Access Visa(R) Card", code: "3006133"},
+            {name: "FIT(R) Platinum Mastercard(R)", code: "4048175"},
+            {name: "NetSpend(R) Visa(R) Prepaid Card", code: "4048170"},
+            {name: "First Progress Platinum Prestige Mastercard(R) Secured", code: "4048198"},
+            {name: "Atmos Summit", code: "5048391"},
+            {name: "Atmos Ascent", code: "5048390"},
+            {name: "Atmos Ascent Business", code: "5048389"},
+            {name: "Citi Custom Cash(R) Card", code: "4048250"},
+            {name: "Citi Rewards+(R) Card", code: "4048138"},
+            {name: "American Airlines AAdvantage(R) MileUp(R) Card", code: "4048125"},
+            {name: "Costco Anywhere Visa(R) Card by Citi", code: "3006104"},
+            {name: "Citi Simplicity(R) Card", code: "740106"},
+            {name: "Citi Strata Premier(SM) Card", code: "520083"},
+            {name: "Citi Strata Elite(SM) Card", code: "5048388"},
+            {name: "Citi(R) Diamond Preferred(R) Card", code: "340046"},
+            {name: "Citi Double Cash(R) Card", code: "3001009"},
+            {name: "Citi(R) / AAdvantage(R) Platinum Select(R) World Elite Mastercard(R)", code: "3004018"},
+            {name: "Citi(R) / AAdvantage Business(TM) World Elite Mastercard(R)", code: "3004019"},
+            {name: "Citi(R) / AAdvantage(R) Executive World Elite(TM) Mastercard(R)", code: "3004054"},
+            {name: "Citi AAdvantage (R) Globe(TM) Mastercard (R)", code: "5048392"}
+        ];
+        
+        let selectedCards = [];
+        let dragSrcIndex = null;
+        let highlightedIndex = -1;
+        let currentSuggestions = [];
+
+        // Add search variations for better matching
+        cardDatabase.forEach(card => {
+            card.searchTerms = generateSearchTerms(card.name);
+        });
+
+        function generateSearchTerms(cardName) {
+            const terms = [cardName.toLowerCase()];
+            
+            // Add common variations
+            if (cardName.includes('Venture X Business')) {
+                terms.push('venture x business', 'venturex business', 'capital one venture x business');
+            } else if (cardName.includes('Venture X')) {
+                terms.push('venture x', 'venturex', 'capital one venture x');
+            }
+            
+            if (cardName.includes('Sapphire Preferred')) {
+                terms.push('csp', 'sapphire preferred', 'chase sapphire preferred');
+            }
+            
+            if (cardName.includes('Sapphire Reserve')) {
+                terms.push('csr', 'sapphire reserve', 'chase sapphire reserve');
+            }
+            
+            if (cardName.includes('Freedom')) {
+                terms.push('cfu', 'cff', 'chase freedom');
+            }
+            
+            if (cardName.includes('Platinum') && cardName.includes('American Express')) {
+                terms.push('amex platinum', 'platinum card');
+            }
+            
+            if (cardName.includes('Gold') && cardName.includes('American Express')) {
+                terms.push('amex gold', 'gold card');
+            }
+            
+            if (cardName.includes('Globe')) {
+                terms.push('globe', 'citi globe', 'aadvantage globe');
+            }
+            
+            // Add simplified versions
+            const simplified = cardName.replace(/[®™()]/g, '').toLowerCase();
+            terms.push(simplified);
+            
+            return terms;
+        }
+
+        function searchCards(query) {
+            if (!query) return [];
+            
+            const searchQuery = query.toLowerCase();
+            const matches = [];
+            
+            cardDatabase.forEach(card => {
+                let score = 0;
+                
+                // Check if any search term matches
+                card.searchTerms.forEach(term => {
+                    if (term.includes(searchQuery)) {
+                        score = Math.max(score, 1);
+                    }
+                    if (term.startsWith(searchQuery)) {
+                        score = Math.max(score, 2);
+                    }
+                    if (term === searchQuery) {
+                        score = Math.max(score, 3);
+                    }
+                });
+                
+                // Check original name
+                if (card.name.toLowerCase().includes(searchQuery)) {
+                    score = Math.max(score, 1);
+                }
+                
+                if (score > 0) {
+                    matches.push({...card, score});
+                }
+            });
+            
+            // Sort by score and then alphabetically
+            matches.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return a.name.localeCompare(b.name);
+            });
+            
+            return matches.slice(0, 10); // Return top 10 matches
+        }
+
+        function displaySuggestions(matches) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            currentSuggestions = matches;
+            highlightedIndex = -1;
+            
+            if (matches.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            suggestionsDiv.innerHTML = '';
+            matches.forEach((card, i) => {
+                const div = document.createElement('div');
+                div.className = 'suggestion';
+                div.dataset.index = i;
+                div.innerHTML = `
+                    <span class="suggestion-name">${card.name}</span>
+                    <span class="suggestion-code">${card.code}</span>
+                `;
+                div.onclick = () => selectCard(card);
+                suggestionsDiv.appendChild(div);
+            });
+            
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function updateHighlighted(items) {
+            items.forEach(item => item.classList.remove('highlighted'));
+            if (highlightedIndex >= 0 && highlightedIndex < items.length) {
+                items[highlightedIndex].classList.add('highlighted');
+            }
+        }
+
+        function selectCard(card) {
+            // Check if card is already selected
+            if (selectedCards.find(c => c.code === card.code)) {
+                alert('This card is already selected!');
+                return;
+            }
+            
+            selectedCards.push(card);
+            updateSelectedCardsDisplay();
+            
+            // Clear search and suggestions
+            document.getElementById('cardSearch').value = '';
+            document.getElementById('suggestions').style.display = 'none';
+            highlightedIndex = -1;
+            currentSuggestions = [];
+        }
+
+        function updateSelectedCardsDisplay() {
+            const container = document.getElementById('selectedCards');
+            
+            if (selectedCards.length === 0) {
+                container.innerHTML = '<span style="color: #999;">No cards selected yet</span>';
+                return;
+            }
+            
+            container.innerHTML = selectedCards.map((card, index) => `
+                <span class="selected-card-chip"
+                      draggable="true"
+                      ondragstart="handleDragStart(event, ${index})"
+                      ondragover="handleDragOver(event, ${index})"
+                      ondrop="handleDrop(event, ${index})">
+                    ${index + 1}. ${card.name}
+                    <span class="remove-card" onclick="removeCard(${index})">✕</span>
+                </span>
+            `).join('');
+        }
+
+        function removeCard(index) {
+            selectedCards.splice(index, 1);
+            updateSelectedCardsDisplay();
+        }
+
+        function handleDragStart(event, index) {
+            dragSrcIndex = index;
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(event, index) {
+            event.preventDefault(); // Allow drop
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(event, index) {
+            event.preventDefault();
+            if (dragSrcIndex === null || dragSrcIndex === index) return;
+
+            const draggedItem = selectedCards[dragSrcIndex];
+            selectedCards.splice(dragSrcIndex, 1);
+            selectedCards.splice(index, 0, draggedItem);
+
+            dragSrcIndex = null;
+            updateSelectedCardsDisplay();
+        }
+
+        function generateLink() {
+            if (selectedCards.length === 0) {
+                alert('Please select at least one card');
+                return;
+            }
+            
+            const emailType = document.querySelector('input[name="emailType"]:checked').value;
+            let emailPrefix = emailType;
+            
+            if (emailType === 'custom') {
+                const customType = document.getElementById('customEmailType').value;
+                if (!customType) {
+                    alert('Please enter a custom email type');
+                    return;
+                }
+                // remove all whitespace from custom type
+                emailPrefix = customType.trim().replace(/\s+/g, '');
+            }
+            
+            const liveDate = document.getElementById('liveDate').value;
+            if (!liveDate) {
+                alert('Please select a live date');
+                return;
+            }
+            
+            // Avoid timezone issues by parsing the YYYY-MM-DD string directly
+            const [yearFull, month, day] = liveDate.split('-'); // "2025-12-04" -> ["2025","12","04"]
+            const year = yearFull.slice(-2);
+            const formattedDate = month + day + year; // MMDDYY
+
+            // Build the link
+            const shnqCodes = selectedCards.map(card => card.code).join(',');
+            const var2 = `${emailPrefix}-${formattedDate}`;
+            
+            const link = `https://www.cardratings.com/bestcards/featured-credit-cards?src=691951&shnq=${shnqCodes}&var2=${var2}`;
+            
+            // Display the result
+            document.getElementById('resultLink').textContent = link;
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // Scroll to result
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyLink() {
+            const link = document.getElementById('resultLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓ Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Link';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function clearAll() {
+            selectedCards = [];
+            updateSelectedCardsDisplay();
+            document.getElementById('cardSearch').value = '';
+            document.getElementById('liveDate').value = '';
+            document.getElementById('customEmailType').value = '';
+            document.getElementById('gwp').checked = true;
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('customEmailSection').style.display = 'none';
+            highlightedIndex = -1;
+            currentSuggestions = [];
+            document.getElementById('suggestions').style.display = 'none';
+        }
+
+        // Event listeners
+        const cardSearchInput = document.getElementById('cardSearch');
+
+        cardSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value;
+            if (query.length > 1) {
+                const matches = searchCards(query);
+                displaySuggestions(matches);
+            } else {
+                document.getElementById('suggestions').style.display = 'none';
+                currentSuggestions = [];
+                highlightedIndex = -1;
+            }
+        });
+
+        // Keyboard navigation for suggestions (ArrowUp/Down + Enter)
+        cardSearchInput.addEventListener('keydown', (e) => {
+            const suggestionsDiv = document.getElementById('suggestions');
+            const items = suggestionsDiv.querySelectorAll('.suggestion');
+
+            if (suggestionsDiv.style.display === 'none' || items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = (highlightedIndex + 1) % items.length;
+                updateHighlighted(items);
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+                updateHighlighted(items);
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightedIndex >= 0 && currentSuggestions[highlightedIndex]) {
+                    selectCard(currentSuggestions[highlightedIndex]);
+                }
+            }
+        });
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.card-search-container')) {
+                document.getElementById('suggestions').style.display = 'none';
+                highlightedIndex = -1;
+                currentSuggestions = [];
+            }
+        });
+
+        // Show/hide custom email type field
+        document.querySelectorAll('input[name="emailType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const customSection = document.getElementById('customEmailSection');
+                if (e.target.value === 'custom') {
+                    customSection.style.display = 'block';
+                } else {
+                    customSection.style.display = 'none';
+                }
+            });
+        });
+
+        // Set default date to today
+        document.getElementById('liveDate').valueAsDate = new Date();
+    </script>
+</body>
+</html>
