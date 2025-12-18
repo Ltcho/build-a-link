@@ -733,7 +733,7 @@
             const shnqCodes = selectedCards.map(card => card.code).join(',');
             const var2 = `${emailPrefix}-${formattedDate}`;
             
-            const link = `https://www.cardratings.com/bestcards/featured-credit-cards?src=691951&shnq=${shnqCodes}&var2=${var2}`;
+            const link = `https://www.cardratings.com/bestcards/featured-credit-cards?src=691951&shnq=${shnqCodes}&var2=${var2}{{var}}`;
             
             // Display the result
             document.getElementById('resultLink').textContent = link;
