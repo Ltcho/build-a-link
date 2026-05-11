@@ -709,7 +709,7 @@
             const year = yearFull.slice(-2);
             const formattedDate = month + day + year;
             const shnqCodes = selectedCards.map(card => card.code).join(',');
-            const link = `https://www.cardratings.com/bestcards/featured-credit-cards?src=691951&shnq=${shnqCodes}&var2={{campaign.\${name}}}{{var}}`;
+            const link = `https://www.cardratings.com/bestcards/featured-credit-cards?src=691951&shnq=${shnqCodes}&var2={{var}}`;
             document.getElementById('resultLink').textContent = link;
             document.getElementById('resultSection').style.display = 'block';
             document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
